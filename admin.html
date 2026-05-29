@@ -1,0 +1,2061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>KUROZENAKU ADMIN</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+
+    body{
+      font-family:'Inter',sans-serif;
+      background:
+      radial-gradient(circle at top,#0f172a 0%,#020617 50%,#000000 100%);
+      color:white;
+      overflow-x:hidden;
+    }
+
+    .logo-font{
+      font-family:'Orbitron',sans-serif;
+      letter-spacing:.12em;
+    }
+
+    .glass{
+      background:rgba(255,255,255,.05);
+      backdrop-filter:blur(18px);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .drawer{
+      transition:all .3s ease;
+    }
+
+    .glow{
+      box-shadow:
+      0 0 15px rgba(34,211,238,.25),
+      0 0 35px rgba(16,185,129,.15);
+    }
+
+    .card-hover{
+      transition:.25s ease;
+    }
+
+    .card-hover:hover{
+      transform:translateY(-6px);
+      box-shadow:
+      0 0 20px rgba(34,211,238,.2),
+      0 0 40px rgba(16,185,129,.15);
+    }
+
+    .tab-active{
+      background:linear-gradient(to right,#06b6d4,#10b981);
+      color:white;
+      box-shadow:0 0 20px rgba(16,185,129,.5);
+    }
+
+    input,
+    select,
+    textarea{
+      outline:none;
+    }
+
+    .toast-enter{
+  animation:toastIn .35s ease;
+}
+
+@keyframes toastIn{
+
+  from{
+    opacity:0;
+    transform:translateY(20px) scale(.95);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+
+}
+
+  </style>
+
+</head>
+
+<body>
+
+<div
+  x-data="adminApp()"
+  x-init="init()"
+  class="max-w-7xl mx-auto p-4 md:p-6">
+
+  <!-- HEADER -->
+
+  <div class="glass rounded-3xl p-5 flex justify-between items-center mb-6 glow">
+
+    <div>
+
+      <h1 class="logo-font text-3xl md:text-4xl font-black bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+        KZ ADMIN
+      </h1>
+
+      <p class="text-gray-400 text-sm mt-1">
+        ADMIN DASHBOARD
+      </p>
+
+    </div>
+
+    <button
+      @click="drawerOpen=true"
+      class="glass px-5 py-3 rounded-2xl hover:bg-white/10 transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+      ☰ Menu
+
+    </button>
+
+  </div>
+
+  <!-- DRAWER OVERLAY -->
+
+  <div
+    x-show="drawerOpen"
+    x-transition.opacity
+    class="fixed inset-0 bg-black/70 z-40"
+    @click="drawerOpen=false">
+  </div>
+
+  <!-- DRAWER -->
+
+  <div
+    x-show="drawerOpen"
+    x-transition
+    class="drawer fixed top-0 right-0 h-full w-80 glass z-50 p-6 border-l border-white/10 overflow-y-auto">
+
+    <div class="flex justify-between items-center mb-6">
+
+      <h2 class="text-2xl font-bold">
+        Dashboard
+      </h2>
+
+      <button
+        @click="drawerOpen=false"
+        class="glass px-3 py-2 rounded-xl hover:bg-white/10">
+
+        ✕
+
+      </button>
+
+    </div>
+
+    <div class="space-y-3">
+
+      <button
+        @click="section='kits'; drawerOpen=false"
+        class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-95">
+
+        ߓ Manage Kits
+
+      </button>
+
+      <button
+        @click="section='claims'; drawerOpen=false"
+        class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-95">
+
+        ✅ Manage Claims
+
+      </button>
+
+      <button
+  onclick="window.location.href='analytics.html'"
+  class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10">
+
+  ߓ Analytics Dashboard
+
+</button>
+
+      <button
+        @click="section='bin'; drawerOpen=false"
+        class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-95">
+
+        ߗ Claim Bin
+
+      </button>
+
+      <button
+        @click="section='analysis'; drawerOpen=false"
+        class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-95">
+
+        ߓ Analysis
+
+      </button>
+
+      <button
+        onclick="window.location.href='index.html'"
+        class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-95">
+
+        ߏ Storefront
+
+      </button>
+
+      <button
+  @click="logout()"
+  class="w-full bg-gradient-to-r from-red-500 to-pink-500 p-4 rounded-2xl text-left font-bold">
+
+  ߚ Logout
+
+</button>
+
+    </div>
+
+  </div>
+
+  <!-- STATS -->
+
+  <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+
+    <div class="glass rounded-3xl p-5 glow">
+      <p class="text-gray-400 text-sm">TOTAL CLAIMS</p>
+      <h2 class="text-3xl font-black mt-2" x-text="claims.length"></h2>
+    </div>
+
+    <div class="glass rounded-3xl p-5 glow">
+      <p class="text-gray-400 text-sm">PENDING</p>
+      <h2 class="text-3xl font-black mt-2 text-yellow-300" x-text="pendingClaims().length"></h2>
+    </div>
+
+    <div class="glass rounded-3xl p-5 glow">
+      <p class="text-gray-400 text-sm">APPROVED</p>
+      <h2 class="text-3xl font-black mt-2 text-emerald-300" x-text="approvedClaims().length"></h2>
+    </div>
+
+    <div class="glass rounded-3xl p-5 glow">
+      <p class="text-gray-400 text-sm">REJECTED</p>
+      <h2 class="text-3xl font-black mt-2 text-red-300" x-text="rejectedClaims().length"></h2>
+    </div>
+
+    <div class="glass rounded-3xl p-5 glow">
+      <p class="text-gray-400 text-sm">REVENUE</p>
+      <h2 class="text-2xl font-black mt-2 text-cyan-300">
+        ₹<span x-text="revenue()"></span>
+      </h2>
+    </div>
+
+    <div class="glass rounded-3xl p-5 glow">
+      <p class="text-gray-400 text-sm">LOW STOCK</p>
+      <h2 class="text-3xl font-black mt-2 text-orange-300" x-text="lowStockCount()"></h2>
+    </div>
+
+  </div>
+
+  <!-- MANAGE KITS -->
+
+  <div x-show="section==='kits'">
+
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+  
+      <h2 class="text-3xl font-black">
+        ߓ Manage Kits
+      </h2>
+      
+      <!-- PRODUCT SEARCH -->
+
+<div class="w-full lg:max-w-md">
+  
+  <input
+    x-model="productSearch"
+    placeholder="Search kits..."
+    class="w-full glass rounded-2xl p-4 bg-transparent text-white placeholder-gray-400">
+
+</div>
+
+      
+   
+      <button
+        @click="showAddKit=true"
+        class="bg-gradient-to-r from-cyan-500 to-emerald-500 px-5 py-3 rounded-2xl font-bold hover:brightness-125 transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-[0_0_20px_rgba(34,211,238,.35)]">
+
+        + Add Kit
+
+      </button>
+
+    </div>
+
+    <!-- ADD KIT -->
+
+    <div x-show="showAddKit" class="glass rounded-3xl p-5 mb-6 glow">
+
+      <div class="grid md:grid-cols-2 gap-4">
+
+        <input
+          x-model="newKit.name"
+          placeholder="Kit Name"
+          class="glass rounded-2xl p-4 bg-transparent">
+
+        <input
+          x-model="newKit.price"
+          placeholder="Price"
+          type="number"
+          class="glass rounded-2xl p-4 bg-transparent">
+
+        <input
+          x-model="newKit.stock"
+          placeholder="Stock"
+          type="number"
+          class="glass rounded-2xl p-4 bg-transparent">
+
+        <select
+          x-model="newKit.category"
+          class="glass rounded-2xl p-4 bg-[#08111f]">
+
+          <option>HG</option>
+          <option>MG</option>
+          <option>RG</option>
+          <option>PG</option>
+          <option>SD</option>
+
+        </select>
+
+     <div class="md:col-span-2 space-y-4">
+
+  <input
+    x-model="newKit.image"
+    placeholder="Paste image URL..."
+    class="glass rounded-2xl p-4 bg-transparent w-full">
+
+  <div
+    x-show="newKit.image"
+    class="glass rounded-2xl p-4">
+
+    <img
+      :src="newKit.image"
+      @error="$event.target.src='https://placehold.co/600x600/111827/ffffff?text=NO+IMAGE'"
+      class="h-56 w-full object-contain rounded-2xl">
+
+  </div>
+
+</div>
+        
+      </div>
+
+      <div class="flex gap-3 mt-5">
+
+        <button
+          @click="addKit()"
+          class="bg-gradient-to-r from-cyan-500 to-emerald-500 px-6 py-3 rounded-2xl font-bold transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+          SAVE KIT
+
+        </button>
+
+        <button
+          @click="showAddKit=false"
+          class="glass px-6 py-3 rounded-2xl hover:bg-white/10 transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+          CANCEL
+
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- EDIT KIT -->
+
+    <div x-show="showEditKit" class="glass rounded-3xl p-5 mb-6 glow">
+
+      <h2 class="text-2xl font-bold mb-4">
+        ✏ Edit Kit
+      </h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+
+        <input
+          x-model="editKit.name"
+          placeholder="Kit Name"
+          class="glass rounded-2xl p-4 bg-transparent">
+
+        <input
+          x-model="editKit.price"
+          placeholder="Price"
+          type="number"
+          class="glass rounded-2xl p-4 bg-transparent">
+
+        <input
+          x-model="editKit.stock"
+          placeholder="Stock"
+          type="number"
+          class="glass rounded-2xl p-4 bg-transparent">
+
+        <select
+          x-model="editKit.category"
+          class="glass rounded-2xl p-4 bg-[#08111f]">
+
+          <option>HG</option>
+          <option>MG</option>
+          <option>RG</option>
+          <option>PG</option>
+          <option>SD</option>
+
+        </select>
+
+        <div class="md:col-span-2 space-y-4">
+
+  <input
+    x-model="editKit.image"
+    placeholder="Paste image URL..."
+    class="glass rounded-2xl p-4 bg-transparent w-full">
+
+  <div
+    x-show="editKit.image"
+    class="glass rounded-2xl p-4">
+
+    <img
+      :src="editKit.image"
+      @error="$event.target.src='https://placehold.co/600x600/111827/ffffff?text=NO+IMAGE'"
+      class="h-56 w-full object-contain rounded-2xl">
+
+  </div>
+
+</div>
+        
+      </div>
+
+      <div class="flex gap-3 mt-5">
+
+        <button
+          @click="updateKit()"
+          class="bg-gradient-to-r from-cyan-500 to-emerald-500 px-6 py-3 rounded-2xl font-bold transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+          UPDATE KIT
+
+        </button>
+
+        <button
+          @click="showEditKit=false"
+          class="glass px-6 py-3 rounded-2xl hover:bg-white/10 transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+          CANCEL
+
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- PRODUCT CARDS -->
+
+ <div
+  x-show="filteredProducts().length === 0"
+  class="glass rounded-3xl p-8 text-center text-gray-400 mb-6">
+
+  No kits found
+
+</div>
+    
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+<template x-for="product in filteredProducts()" :key="product.id">
+  
+        <div class="glass rounded-3xl p-5 glow card-hover">
+
+         <img
+  :src="product.image"
+  @error="$event.target.src='https://placehold.co/600x600/111827/ffffff?text=NO+IMAGE'"
+  class="h-48 w-full object-contain mb-4 rounded-2xl">
+          
+          <h2 class="text-xl font-bold" x-text="product.name"></h2>
+
+          <p class="text-cyan-300 text-2xl font-black mt-2">
+            ₹<span x-text="product.price"></span>
+          </p>
+
+         <div class="text-gray-400 mt-2">
+  
+  Stock:
+  <span x-text="product.stock"></span>
+
+</div>
+
+<!-- OUT OF STOCK -->
+
+<div
+  x-show="Number(product.stock) === 0"
+  class="mt-3 bg-red-500/20 text-red-300 px-3 py-2 rounded-xl text-sm font-bold">
+
+  ❌ OUT OF STOCK
+
+</div>
+
+<!-- LOW STOCK -->
+
+<div
+  x-show="Number(product.stock) > 0 && Number(product.stock) <= 1"
+  class="mt-3 bg-orange-500/20 text-orange-300 px-3 py-2 rounded-xl text-sm font-bold">
+
+  ⚠ LOW STOCK
+
+</div>
+          
+          <div class="flex gap-2 mt-4">
+
+            <button
+              @click="openEditKit(product)"
+              class="flex-1 bg-gradient-to-r from-cyan-500 to-emerald-500 px-4 py-3 rounded-2xl font-bold transition-all duration-300 hover:scale-[1.03] hover:brightness-125 active:scale-95">
+
+              ✏ EDIT
+
+            </button>
+
+            <button
+              @click="deleteKit(product.id)"
+              class="flex-1 bg-gradient-to-r from-red-500 to-pink-500 px-4 py-3 rounded-2xl font-bold transition-all duration-300 hover:scale-[1.03] hover:brightness-125 active:scale-95">
+
+              DELETE
+
+            </button>
+
+          </div>
+
+          <div class="flex gap-2 mt-3 w-full">
+
+  <button
+    @click="quickRestock(product,1)"
+    class="flex-1 glass px-3 py-2 rounded-xl text-sm font-bold hover:bg-white/10">
+
+    +1 STOCK
+
+  </button>
+
+  <button
+    @click="quickRestock(product,5)"
+    class="flex-1 glass px-3 py-2 rounded-xl text-sm font-bold hover:bg-white/10">
+
+    +5 STOCK
+
+  </button>
+
+</div>
+          
+        </div>
+
+      </template>
+
+    </div>
+
+  </div>
+
+  <!-- CLAIMS -->
+
+  <div x-show="section==='claims'">
+
+    <!-- CLAIM SEARCH -->
+
+<div class="w-full lg:max-w-md mb-6">
+  
+  <input
+    x-model="claimSearch"
+    placeholder="Search claims by customer or product..."
+    class="w-full glass rounded-2xl p-4 bg-transparent text-white placeholder-gray-400">
+
+</div>
+
+    <h2 class="text-3xl font-black mb-6">
+      ✅ Manage Claims
+    </h2>
+
+    <!-- FILTER BUTTONS -->
+
+    <div class="flex flex-wrap gap-3 mb-6">
+
+      <button
+        @click="claimFilter='all'"
+        :class="claimFilter==='all' ? 'tab-active' : 'glass'"
+        class="px-5 py-3 rounded-2xl font-bold transition-all duration-300">
+
+        ALL (<span x-text="claims.length"></span>)
+
+      </button>
+
+      <button
+        @click="claimFilter='pending'"
+        :class="claimFilter==='pending' ? 'tab-active' : 'glass'"
+        class="px-5 py-3 rounded-2xl font-bold transition-all duration-300">
+
+        PENDING (<span x-text="pendingClaims().length"></span>)
+
+      </button>
+
+      <button
+        @click="claimFilter='approved'"
+        :class="claimFilter==='approved' ? 'tab-active' : 'glass'"
+        class="px-5 py-3 rounded-2xl font-bold transition-all duration-300">
+
+        APPROVED (<span x-text="approvedClaims().length"></span>)
+
+      </button>
+
+      <button
+        @click="claimFilter='rejected'"
+        :class="claimFilter==='rejected' ? 'tab-active' : 'glass'"
+        class="px-5 py-3 rounded-2xl font-bold transition-all duration-300">
+
+        REJECTED (<span x-text="rejectedClaims().length"></span>)
+
+      </button>
+
+    </div>
+
+    <div
+  x-show="filteredClaims().length === 0"
+  class="glass rounded-3xl p-8 text-center text-gray-400 mb-6">
+
+  No claims found
+
+</div>
+    
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+      <template x-for="claim in filteredClaims()" :key="claim.id">
+
+<div
+  @click="openClaimModal(claim)"
+  class="glass rounded-3xl p-5 glow card-hover cursor-pointer">
+  
+          <div class="flex justify-between items-start mb-4">
+
+            <div>
+
+              <h2 class="text-xl font-bold" x-text="claim.productName"></h2>
+
+              <p class="text-cyan-300 font-black text-2xl mt-2">
+                ₹<span x-text="claim.price"></span>
+              </p>
+
+            </div>
+
+            <div
+              class="px-3 py-1 rounded-xl text-sm font-bold"
+              :class="{
+                'bg-yellow-500/20 text-yellow-300': claim.status==='pending',
+                'bg-emerald-500/20 text-emerald-300': claim.status==='approved',
+                'bg-red-500/20 text-red-300': claim.status==='rejected'
+              }">
+
+              <span x-text="claim.status.toUpperCase()"></span>
+
+            </div>
+
+          </div>
+
+          <div class="space-y-2 text-sm text-gray-300">
+
+            <p>
+              ߑ <span x-text="claim.customerName"></span>
+            </p>
+
+            <p>
+              ߓ <span x-text="claim.phone || 'N/A'"></span>
+            </p>
+
+            <p>
+              ߓ <span x-text="claim.contact || 'N/A'"></span>
+            </p>
+
+            <p>
+              ߓ <span x-text="claim.address"></span>
+            </p>
+
+          </div>
+  
+  <!-- PENDING -->
+
+<template x-if="claim.status === 'pending'">
+
+  <div class="flex gap-2 w-full mt-4">
+
+    <button
+      @click.stop="updateClaimStatus(claim,'approved')"
+      class="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-3 rounded-2xl font-bold">
+
+      APPROVE
+
+    </button>
+
+    <button
+      @click.stop="updateClaimStatus(claim,'rejected')"
+      class="flex-1 bg-gradient-to-r from-red-500 to-pink-500 px-4 py-3 rounded-2xl font-bold">
+
+      REJECT
+
+    </button>
+
+  </div>
+
+</template>
+  
+  <!-- APPROVED -->
+
+            <template x-if="claim.status === 'approved'">
+
+              <div class="flex gap-2 w-full">
+
+                <button
+                  @click.stop="updateClaimStatus(claim,'pending')"
+                  :disabled="processingButtons[claim.id + '_pending']"
+                  class="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-3 rounded-2xl font-bold">
+
+                <span x-show="!processingButtons[claim.id + '_pending']">
+  REVERT
+</span>
+
+<span x-show="processingButtons[claim.id + '_pending']">
+  PROCESSING...
+</span>
+
+                </button>
+
+                <button
+                  @click.stop="updateClaimStatus(claim,'rejected')"
+                  class="flex-1 bg-gradient-to-r from-red-500 to-pink-500 px-4 py-3 rounded-2xl font-bold">
+
+                  REJECT
+
+                </button>
+
+              </div>
+
+            </template>
+
+            <!-- REJECTED -->
+
+            <template x-if="claim.status === 'rejected'">
+
+              <div class="flex gap-2 w-full">
+
+                <button
+                  @click.stop="updateClaimStatus(claim,'pending')"
+                  :disabled="processingButtons[claim.id + '_pending']"
+                  class="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-3 rounded-2xl font-bold">
+
+                <span x-show="!processingButtons[claim.id + '_pending']">
+  REVERT
+</span>
+
+<span x-show="processingButtons[claim.id + '_pending']">
+  PROCESSING...
+</span>
+
+                </button>
+
+                <button
+                  @click.stop="moveClaimToBin(claim)"
+                  class="flex-1 bg-gradient-to-r from-red-500 to-pink-500 px-4 py-3 rounded-2xl font-bold">
+
+                  DELETE
+
+                </button>
+
+              </div>
+
+            </template>
+
+          </div>
+
+              </template>
+
+    </div>
+
+  <!-- EXPORT BUTTONS -->
+
+<div class="flex flex-wrap gap-3 mb-6">
+
+  <button
+    @click="exportClaimsCSV('all')"
+    class="bg-gradient-to-r from-cyan-500 to-emerald-500 px-5 py-3 rounded-2xl font-bold hover:brightness-125 transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+    EXPORT ALL CSV
+
+  </button>
+
+  <button
+    @click="exportClaimsCSV('approved')"
+    class="glass px-5 py-3 rounded-2xl font-bold hover:bg-white/10 transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+    APPROVED CSV
+
+  </button>
+
+  <button
+    @click="exportClaimsCSV('pending')"
+    class="glass px-5 py-3 rounded-2xl font-bold hover:bg-white/10 transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+    PENDING CSV
+
+  </button>
+
+  <button
+    @click="exportClaimsCSV('rejected')"
+    class="glass px-5 py-3 rounded-2xl font-bold hover:bg-white/10 transition-all duration-300 hover:scale-[1.03] active:scale-95">
+
+    REJECTED CSV
+
+  </button>
+
+</div>
+  
+  </div>
+
+  <!-- CLAIM BIN -->
+
+  <div x-show="section==='bin'">
+
+    <div class="flex justify-between items-center mb-6">
+
+      <h2 class="text-3xl font-black">
+        ߗ Claim Bin
+      </h2>
+
+      <div class="text-gray-400 text-sm">
+        Deleted Claims:
+        <span x-text="claimBin.length"></span>
+      </div>
+
+    </div>
+
+    <div
+      x-show="claimBin.length === 0"
+      class="glass rounded-3xl p-8 text-center text-gray-400">
+
+      No deleted claims
+
+    </div>
+
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+      <template x-for="claim in claimBin" :key="claim.id">
+
+        <div class="glass rounded-3xl p-5 glow card-hover opacity-80">
+
+          <div class="flex justify-between items-start mb-4">
+
+            <div>
+
+              <h2
+                class="text-xl font-bold"
+                x-text="claim.productName">
+              </h2>
+
+              <p class="text-cyan-300 font-black text-2xl mt-2">
+                ₹<span x-text="claim.price"></span>
+              </p>
+
+            </div>
+
+            <div class="px-3 py-1 rounded-xl text-sm font-bold bg-red-500/20 text-red-300">
+
+              DELETED
+
+            </div>
+
+          </div>
+
+          <div class="space-y-2 text-sm text-gray-300">
+
+            <p>
+              ߑ
+              <span x-text="claim.customerName"></span>
+            </p>
+
+            <p>
+              ߓ
+              <span x-text="claim.contact || 'N/A'"></span>
+            </p>
+
+            <p>
+              ߓ
+              <span x-text="claim.address"></span>
+            </p>
+
+            <p>
+              ߓ Status Before Delete:
+              <span
+                class="font-bold"
+                x-text="claim.status">
+              </span>
+            </p>
+
+          </div>
+
+        </div>
+
+      </template>
+
+    </div>
+
+  </div>
+
+  <!-- ANALYSIS -->
+
+  <div x-show="section==='analysis'">
+
+    <h2 class="text-3xl font-black mb-6">
+      ߓ Analysis
+    </h2>
+
+    <div class="grid md:grid-cols-2 gap-5">
+
+      <div class="glass rounded-3xl p-6 glow">
+
+        <h3 class="text-2xl font-bold mb-4">
+          Claim Overview
+        </h3>
+
+        <div class="space-y-4">
+
+          <div class="flex justify-between">
+            <span>Total Claims</span>
+            <span class="font-bold" x-text="claims.length"></span>
+          </div>
+
+          <div class="flex justify-between">
+            <span>Pending</span>
+            <span class="font-bold text-yellow-300" x-text="pendingClaims().length"></span>
+          </div>
+
+          <div class="flex justify-between">
+            <span>Approved</span>
+            <span class="font-bold text-emerald-300" x-text="approvedClaims().length"></span>
+          </div>
+
+          <div class="flex justify-between">
+            <span>Rejected</span>
+            <span class="font-bold text-red-300" x-text="rejectedClaims().length"></span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="glass rounded-3xl p-6 glow">
+
+        <h3 class="text-2xl font-bold mb-4">
+          Inventory Overview
+        </h3>
+
+        <div class="space-y-4">
+
+          <div class="flex justify-between">
+            <span>Total Kits</span>
+            <span class="font-bold" x-text="products.length"></span>
+          </div>
+
+          <div class="flex justify-between">
+            <span>Low Stock Kits</span>
+            <span class="font-bold text-orange-300" x-text="lowStockCount()"></span>
+          </div>
+
+          <div class="flex justify-between">
+            <span>Total Revenue</span>
+            <span class="font-bold text-cyan-300">
+              ₹<span x-text="revenue()"></span>
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+   <!-- CLAIM DETAILS MODAL -->
+
+<template x-if="showClaimModal">
+
+  <div
+    x-transition.opacity
+    class="fixed inset-0 bg-black/70 z-[9998] flex items-center justify-center p-4"
+    @click.self="showClaimModal=false; selectedClaim=null">
+
+    <div
+      class="glass rounded-3xl w-full max-w-2xl p-6 glow max-h-[90vh] overflow-y-auto">
+
+      <!-- HEADER -->
+
+      <div class="flex justify-between items-center mb-6">
+
+        <div>
+
+          <h2 class="text-3xl font-black">
+            ߓ Claim Details
+          </h2>
+
+          <p class="text-gray-400 text-sm mt-1">
+            Full customer & order information
+          </p>
+
+        </div>
+
+        <button
+          @click="showClaimModal=false; selectedClaim=null"
+          class="glass px-4 py-2 rounded-2xl hover:bg-white/10">
+
+          ✕
+
+        </button>
+
+      </div>
+
+      <!-- CONTENT -->
+
+      <template x-if="selectedClaim">
+
+        <div class="space-y-6">
+
+          <!-- PRODUCT -->
+
+          <div class="glass rounded-2xl p-5">
+
+            <h3 class="text-xl font-bold mb-4 text-cyan-300">
+              Product
+            </h3>
+
+            <div class="space-y-2">
+
+              <p>
+                <span class="text-gray-400">Name:</span>
+
+                <span
+                  class="font-bold"
+                  x-text="selectedClaim.productName">
+                </span>
+              </p>
+
+              <p>
+                <span class="text-gray-400">Price:</span>
+
+                ₹<span
+                  class="font-bold"
+                  x-text="selectedClaim.price">
+                </span>
+              </p>
+
+              <p>
+                <span class="text-gray-400">Status:</span>
+
+                <span
+                  class="font-bold uppercase"
+                  x-text="selectedClaim.status">
+                </span>
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- CUSTOMER -->
+
+          <div class="glass rounded-2xl p-5">
+
+            <h3 class="text-xl font-bold mb-4 text-emerald-300">
+              Customer
+            </h3>
+
+            <div class="space-y-2">
+
+              <p>
+                <span class="text-gray-400">Name:</span>
+
+                <span
+                  class="font-bold"
+                  x-text="selectedClaim.customerName">
+                </span>
+              </p>
+
+              <p>
+                <span class="text-gray-400">Phone:</span>
+
+                <span
+                  class="font-bold"
+                  x-text="selectedClaim.phone || 'N/A'">
+                </span>
+              </p>
+
+              <p>
+                <span class="text-gray-400">Email:</span>
+
+                <span
+                  class="font-bold"
+                  x-text="selectedClaim.contact || 'N/A'">
+                </span>
+              </p>
+
+              <p>
+                <span class="text-gray-400">Address:</span>
+
+                <span
+                  class="font-bold"
+                  x-text="selectedClaim.address">
+                </span>
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </template>
+
+    </div>
+
+  </div>
+
+</template>
+  
+</div>
+  
+  <!-- TOASTS -->
+
+<div class="fixed top-5 right-5 z-[9999] space-y-3 w-[320px]">
+
+  <template x-for="toast in toasts" :key="toast.id">
+
+    <div
+      class="toast-enter rounded-2xl p-4 shadow-2xl border backdrop-blur-xl"
+      :class="{
+        'bg-emerald-500/20 border-emerald-400 text-emerald-200': toast.type==='success',
+        'bg-red-500/20 border-red-400 text-red-200': toast.type==='error',
+        'bg-yellow-500/20 border-yellow-400 text-yellow-200': toast.type==='warning',
+        'bg-cyan-500/20 border-cyan-400 text-cyan-200': toast.type==='info'
+      }">
+
+      <div class="flex items-start justify-between gap-3">
+
+        <div>
+
+          <p
+            class="font-bold text-sm uppercase tracking-wider"
+            x-text="toast.title">
+          </p>
+
+          <p
+            class="text-sm mt-1 opacity-90"
+            x-text="toast.message">
+          </p>
+
+        </div>
+
+        <button
+          @click="removeToast(toast.id)"
+          class="opacity-60 hover:opacity-100">
+
+          ✕
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </template>
+
+</div>
+  
+<script>
+
+function adminApp(){
+
+  return {
+
+    drawerOpen:false,
+    section:'kits',
+    claimFilter:'all',
+    
+    claimSearch:'',
+    productSearch:'',
+
+    claims:[],
+    products:[],
+    claimBin:[],
+    activityLogs:[],
+    toasts:[],
+
+    processingClaims:{},
+processingButtons:{},
+    
+    showClaimModal:false,
+
+selectedClaim:null,
+    
+    db:null,
+
+    showAddKit:false,
+    showEditKit:false,
+
+    newKit:{
+      name:'',
+      price:'',
+      stock:'',
+      category:'HG',
+      image:''
+    },
+
+    editKit:{
+      id:'',
+      name:'',
+      price:'',
+      stock:'',
+      category:'HG',
+      image:''
+    },
+
+    init(){
+
+          const firebaseConfig = {
+
+        apiKey:'AIzaSyByLURDPjEbLepc3Wz3O1MAYYLXSeu04Zg',
+        authDomain:'kurozenaku-gundam-store.firebaseapp.com',
+        projectId:'kurozenaku-gundam-store'
+
+      };
+
+      if(!firebase.apps.length){
+        firebase.initializeApp(firebaseConfig);
+      }
+
+      const auth = firebase.auth();
+
+auth.onAuthStateChanged(user => {
+
+  if(!user){
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const adminEmails = [
+    'vedantbhalge2006@gmail.com'
+  ];
+
+  if(!adminEmails.includes(user.email)){
+    alert('Access denied');
+    firebase.auth().signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+
+});
+
+      this.db = firebase.firestore();
+
+      this.db
+      .collection('products')
+      .onSnapshot(snapshot => {
+
+        this.products =
+        snapshot.docs.map(doc => ({
+          id:doc.id,
+          ...doc.data()
+        }));
+
+      });
+
+      this.db
+      .collection('claims')
+      .orderBy('createdAt','desc')
+      .onSnapshot(snapshot => {
+
+        this.claims =
+        snapshot.docs.map(doc => ({
+          id:doc.id,
+          ...doc.data()
+        }));
+
+      });
+
+      this.db
+      .collection('claimBin')
+      .orderBy('deletedAt','desc')
+      .onSnapshot(snapshot => {
+
+        this.claimBin =
+        snapshot.docs.map(doc => ({
+          id:doc.id,
+          ...doc.data()
+        }));
+
+      });
+
+      this.db
+.collection('activityLogs')
+.orderBy('createdAt','desc')
+.limit(50)
+.onSnapshot(snapshot => {
+
+  this.activityLogs =
+  snapshot.docs.map(doc => ({
+    id:doc.id,
+    ...doc.data()
+  }));
+
+});
+
+    },
+
+   filteredClaims(){
+
+  let filtered = this.claims;
+
+  if(this.claimFilter !== 'all'){
+
+    filtered = filtered.filter(
+      c => c.status === this.claimFilter
+    );
+
+  }
+
+  if(this.claimSearch){
+
+    filtered = filtered.filter(c =>
+
+      (c.customerName || '')
+      .toLowerCase()
+      .includes(this.claimSearch.toLowerCase())
+
+      ||
+
+      (c.productName || '')
+      .toLowerCase()
+      .includes(this.claimSearch.toLowerCase())
+
+      ||
+
+      (c.contact || '')
+      .toLowerCase()
+      .includes(this.claimSearch.toLowerCase())
+
+      ||
+
+      (c.phone || '')
+      .toLowerCase()
+      .includes(this.claimSearch.toLowerCase())
+
+    );
+
+  }
+
+  return filtered;
+
+},
+    
+   filteredProducts(){
+
+  if(!this.productSearch.trim()){
+    return this.products;
+  }
+
+  return this.products.filter(product =>
+
+    (product.name || '')
+    .toLowerCase()
+    .includes(this.productSearch.toLowerCase())
+
+    ||
+
+    (product.category || '')
+    .toLowerCase()
+    .includes(this.productSearch.toLowerCase())
+
+  );
+
+},
+    
+    pendingClaims(){
+      return this.claims.filter(c => c.status === 'pending');
+    },
+
+    approvedClaims(){
+      return this.claims.filter(c => c.status === 'approved');
+    },
+
+    rejectedClaims(){
+      return this.claims.filter(c => c.status === 'rejected');
+    },
+
+    openClaimModal(claim){
+
+  this.selectedClaim = claim;
+
+  this.showClaimModal = true;
+
+},
+    
+    revenue(){
+
+      return this.approvedClaims()
+      .reduce((sum,c)=>
+        sum + Number(c.price || 0)
+      ,0);
+
+    },
+
+    lowStockCount(){
+
+      return this.products.filter(
+        p => Number(p.stock || 0) <= 1
+      ).length;
+
+    },
+    
+async addKit(){
+
+try{
+
+if(
+  !this.newKit.name ||
+  !this.newKit.price
+){
+  this.showToast(
+    'warning',
+    'MISSING INFO',
+    'Name and price required'
+  );
+  return;
+}
+
+if(
+  this.newKit.image &&
+  !this.newKit.image.startsWith('http')
+){
+  this.showToast(
+    'warning',
+    'INVALID IMAGE',
+    'Enter valid image URL'
+  );
+  return;
+}
+
+await this.db
+.collection('products')
+.add({
+
+  name:this.newKit.name,
+  price:Number(this.newKit.price),
+  stock:Number(this.newKit.stock || 0),
+  category:this.newKit.category,
+
+  image:
+  this.newKit.image ||
+  'https://placehold.co/600x600/111827/ffffff?text=NO+IMAGE',
+
+  createdAt:
+  firebase.firestore.FieldValue.serverTimestamp(),
+
+  updatedAt:
+  firebase.firestore.FieldValue.serverTimestamp()
+
+});
+
+this.newKit = {
+  name:'',
+  price:'',
+  stock:'',
+  category:'HG',
+  image:''
+};
+
+this.showAddKit = false;
+
+await this.logActivity(
+  'KIT_ADDED',
+  {
+    name:this.newKit.name,
+    category:this.newKit.category,
+    price:Number(this.newKit.price)
+  }
+);
+
+this.showToast(
+  'success',
+  'KIT ADDED',
+  'New kit added successfully'
+);
+
+}
+
+catch(error){
+
+console.error(error);
+
+this.showToast(
+  'error',
+  'ADD FAILED',
+  'Failed to add kit'
+);
+
+}
+
+},
+
+    openEditKit(product){
+
+      this.editKit = {
+        ...product
+      };
+
+      this.showEditKit = true;
+
+    },
+
+   async updateKit(){
+
+try{
+
+if(
+  !this.editKit.name ||
+  !this.editKit.price
+){
+  this.showToast(
+    'warning',
+    'MISSING INFO',
+    'Name and price required'
+  );
+  return;
+}
+
+if(
+  this.editKit.image &&
+  !this.editKit.image.startsWith('http')
+){
+  this.showToast(
+    'warning',
+    'INVALID IMAGE',
+    'Enter valid image URL'
+  );
+  return;
+}
+
+await this.db
+.collection('products')
+.doc(this.editKit.id)
+.update({
+
+  name:this.editKit.name,
+  price:Number(this.editKit.price),
+  stock:Number(this.editKit.stock),
+  category:this.editKit.category,
+
+  image:
+  this.editKit.image ||
+  'https://placehold.co/600x600/111827/ffffff?text=NO+IMAGE',
+
+  updatedAt:
+  firebase.firestore.FieldValue.serverTimestamp()
+
+});
+
+this.showEditKit = false;
+
+await this.logActivity(
+  'KIT_UPDATED',
+  {
+    id:this.editKit.id,
+    name:this.editKit.name
+  }
+);
+
+this.showToast(
+  'success',
+  'KIT UPDATED',
+  'Kit updated successfully'
+);
+
+}
+
+catch(error){
+
+console.error(error);
+
+this.showToast(
+  'error',
+  'UPDATE FAILED',
+  'Failed to update kit'
+);
+
+}
+
+},
+
+ async deleteKit(id){
+
+  try{
+
+    const confirmDelete =
+    confirm('Delete this kit permanently?');
+
+    if(!confirmDelete){
+      return;
+    }
+
+    await this.db
+.collection('products')
+.doc(id)
+.delete();
+
+await this.logActivity(
+  'KIT_DELETED',
+  {
+    productId:id
+  }
+);
+
+this.showToast(
+      'warning',
+      'KIT DELETED',
+      'Kit removed permanently'
+    );
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    this.showToast(
+      'error',
+      'DELETE FAILED',
+      'Failed to delete kit'
+    );
+
+  }
+
+},
+
+  async quickRestock(product,amount){
+
+  try{
+
+    await this.db
+    .collection('products')
+    .doc(product.id)
+    .update({
+
+      stock:(Number(product.stock) || 0) + amount,
+
+      updatedAt:
+      firebase.firestore.FieldValue.serverTimestamp()
+
+    });
+
+    await this.logActivity(
+  'KIT_RESTOCKED',
+  {
+    product:product.name,
+    added:amount
+  }
+);
+
+    this.showToast(
+      'success',
+      'STOCK UPDATED',
+      `${product.name} stock increased by ${amount}`
+    );
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    this.showToast(
+      'error',
+      'RESTOCK FAILED',
+      'Failed to update stock'
+    );
+
+  }
+
+},
+    async logout(){
+
+  await firebase.auth().signOut();
+
+  window.location.href = 'login.html';
+
+},
+    
+    async updateClaimStatus(claim,newStatus){
+
+const actionKey = claim.id + '_' + newStatus;
+
+if(this.processingButtons[actionKey]){
+  return;
+}
+
+this.processingButtons[actionKey] = true;
+      
+      try{
+
+        await this.db.runTransaction(async transaction => {
+
+          const claimRef =
+          this.db.collection('claims').doc(claim.id);
+
+          const claimDoc =
+          await transaction.get(claimRef);
+
+          if(!claimDoc.exists){
+            throw new Error('Claim not found');
+          }
+
+          const claimData = claimDoc.data();
+
+          const oldStatus =
+          claimData.status || 'pending';
+
+          if(oldStatus === newStatus){
+            return;
+          }
+
+
+          if(!claimData.productId){
+  throw new Error('Missing product ID');
+}
+
+const productRef =
+this.db.collection('products')
+.doc(claimData.productId);
+
+          const productDoc =
+          await transaction.get(productRef);
+
+         if(!productDoc.exists){
+  throw new Error('Product not found');
+}
+
+const productData =
+productDoc.data();
+          
+          let stock =
+          Number(productData.stock || 0);
+
+          if(
+            oldStatus !== 'approved'
+            &&
+            newStatus === 'approved'
+          ){
+
+            if(stock <= 0){
+              throw new Error('Out of stock');
+            }
+
+            stock -= 1;
+
+          }
+
+          if(
+            oldStatus === 'approved'
+            &&
+            newStatus !== 'approved'
+          ){
+
+            stock += 1;
+
+          }
+
+          transaction.update(productRef,{
+            stock,
+            updatedAt:
+            firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          transaction.update(claimRef,{
+            status:newStatus,
+            updatedAt:
+            firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+        });
+
+        this.showClaimModal = false;
+this.selectedClaim = null;
+
+        await this.logActivity(
+  'CLAIM_STATUS_UPDATED',
+  {
+    customer:claim.customerName,
+    product:claim.productName,
+    oldStatus:claim.status,
+    newStatus
+  }
+);
+
+         this.showToast(
+  newStatus === 'approved'
+    ? 'success'
+    : newStatus === 'rejected'
+    ? 'warning'
+    : 'info',
+
+  `CLAIM ${newStatus.toUpperCase()}`,
+
+  `${claim.customerName}'s claim updated`
+);
+
+      }
+
+             catch(error){
+
+        console.error(error);
+this.showToast(
+  'error',
+  'ACTION FAILED',
+  error.message
+);
+        
+      }
+
+      finally{
+
+  delete this.processingButtons[actionKey];
+
+      }
+
+    },
+
+    async moveClaimToBin(claim){
+
+      if(this.processingClaims[claim.id]){
+        return;
+      }
+
+      const confirmDelete =
+      confirm('Move claim to bin?');
+
+      if(!confirmDelete){
+        return;
+      }
+
+      this.processingClaims[claim.id] = true;
+
+      try{
+
+        await this.db.runTransaction(async transaction => {
+
+          const claimRef =
+          this.db.collection('claims')
+          .doc(claim.id);
+
+          const claimDoc =
+          await transaction.get(claimRef);
+
+          if(!claimDoc.exists){
+            throw new Error('Claim already deleted');
+          }
+
+          const claimData =
+          claimDoc.data();
+
+                   const binRef =
+          this.db.collection('claimBin')
+          .doc();
+
+          transaction.set(binRef,{
+
+            ...claimData,
+
+            originalClaimId:claim.id,
+
+            deletedAt:
+            firebase.firestore.FieldValue.serverTimestamp()
+
+          });
+
+          transaction.delete(claimRef);
+
+        });
+
+      }
+
+      catch(error){
+
+        console.error(error);
+        alert(error.message || 'Delete failed');
+
+      }
+
+      finally{
+
+        delete this.processingClaims[claim.id];
+
+      }
+
+    },
+    
+showToast(type,title,message){
+
+  const id = Date.now();
+
+  this.toasts.push({
+    id,
+    type,
+    title,
+    message
+  });
+
+  setTimeout(() => {
+
+    this.removeToast(id);
+
+  },3500);
+
+},
+
+removeToast(id){
+
+  this.toasts =
+  this.toasts.filter(t => t.id !== id);
+
+},
+
+    async logActivity(action,details={}){
+
+  try{
+
+    const user =
+    firebase.auth().currentUser;
+
+    await this.db
+    .collection('activityLogs')
+    .add({
+
+      action,
+
+      details,
+
+      adminEmail:user?.email || 'Unknown',
+
+      createdAt:
+      firebase.firestore.FieldValue.serverTimestamp()
+
+    });
+
+  }
+
+  catch(error){
+
+    console.error(
+      'Activity log failed:',
+      error
+    );
+
+  }
+
+},
+
+    exportClaimsCSV(type){
+
+  let data = this.claims;
+
+  if(type !== 'all'){
+
+    data = data.filter(
+      c => c.status === type
+    );
+
+  }
+
+  if(data.length === 0){
+
+    this.showToast(
+      'warning',
+      'NO DATA',
+      'No claims available for export'
+    );
+
+    return;
+
+  }
+
+  const headers = [
+
+    'Customer Name',
+    'Phone',
+    'Email',
+    'Address',
+    'Product',
+    'Price',
+    'Status'
+
+  ];
+
+  const rows = data.map(claim => [
+
+    `"${claim.customerName || ''}"`,
+    `"${claim.phone || ''}"`,
+    `"${claim.contact || ''}"`,
+    `"${claim.address || ''}"`,
+    `"${claim.productName || ''}"`,
+    `"${claim.price || 0}"`,
+    `"${claim.status || ''}"`
+
+  ]);
+
+  const csvContent = [
+
+    headers.join(','),
+    ...rows.map(r => r.join(','))
+
+  ].join('\n');
+
+  const blob = new Blob(
+    [csvContent],
+    { type:'text/csv;charset=utf-8;' }
+  );
+
+  const link =
+  document.createElement('a');
+
+  const url =
+  URL.createObjectURL(blob);
+
+  link.href = url;
+
+  link.download =
+  `claims-${type}-${Date.now()}.csv`;
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+
+  this.showToast(
+    'success',
+    'CSV EXPORTED',
+    `${data.length} claims exported`
+  );
+
+},
+  }
+
+}
+
+</script>
+
+</body>
+</html>
