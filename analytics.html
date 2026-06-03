@@ -104,7 +104,7 @@
 
   <!-- KPI STATS -->
 
-  <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+  <div class="grid grid-cols-2 lg:grid-cols-8 gap-4 mb-8">
 
     <div class="glass rounded-3xl p-5 glow">
       <p class="text-gray-400 text-sm">TOTAL CLAIMS</p>
@@ -133,6 +133,18 @@
         ₹<span x-text="revenue"></span>
       </h2>
     </div>
+
+    <div class="glass rounded-3xl p-5 glow">
+  <p class="text-gray-400 text-sm">TOTAL SALES</p>
+  <h2 class="text-3xl font-black mt-2 text-purple-300"
+      x-text="totalSales"></h2>
+</div>
+
+    <div class="glass rounded-3xl p-5 glow">
+  <p class="text-gray-400 text-sm">LOW STOCK</p>
+  <h2 class="text-3xl font-black mt-2 text-red-400"
+      x-text="lowStockCount"></h2>
+</div>
 
     <div class="glass rounded-3xl p-5 glow">
       <p class="text-gray-400 text-sm">TOTAL PRODUCTS</p>
@@ -208,12 +220,16 @@ function analyticsApp(){
     claims:[],
     products:[],
     sales:[],
-
-   approvedClaims:0,
-rejectedClaims:0,
-pendingClaims:0,
-revenue:0,
     
+lowStockCount:0,
+    
+    totalSales:0,
+
+    approvedClaims:0,
+    rejectedClaims:0,
+    pendingClaims:0,
+    revenue:0,
+
     claimsChart:null,
     categoryChart:null,
     revenueChart:null,
@@ -259,6 +275,7 @@ revenue:0,
   }
 
 });
+
       this.db = firebase.firestore();
 
       this.loadData();
@@ -266,22 +283,45 @@ revenue:0,
     },
 
    loadData(){
-     this.db
-.collection('claims')
-.onSnapshot(snapshot => {
-
-  this.claims =
-  snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
-
-  this.calculateStats();
-  this.renderCharts();
-
-});
 
   this.db
+  .collection('claims')
+  .onSnapshot(snapshot => {
+
+    this.claims =
+    snapshot.docs.map(doc => ({
+      id:doc.id,
+      ...doc.data()
+    }));
+
+    this.calculateStats();
+
+    this.renderCharts();
+
+  });
+
+  this.db
+  .collection('products')
+  .onSnapshot(snapshot => {
+
+    this.products =
+snapshot.docs
+.map(doc => ({
+  id:doc.id,
+  ...doc.data()
+}))
+.filter(product => !product.isDeleted);
+
+this.lowStockCount =
+this.products.filter(
+  product => Number(product.stock || 0) <= 5
+).length;
+
+this.renderCharts();
+
+  });
+
+     this.db
 .collection('sales')
 .onSnapshot(snapshot => {
 
@@ -297,22 +337,6 @@ revenue:0,
 
 });
 
-  this.db
-  .collection('products')
-  .onSnapshot(snapshot => {
-
-   this.products =
-snapshot.docs
-.map(doc => ({
-  id:doc.id,
-  ...doc.data()
-}))
-.filter(product => !product.isDeleted);
-
-    this.renderCharts();
-
-  });
-
 },
     
     calculateStats(){
@@ -326,19 +350,19 @@ snapshot.docs
       this.pendingClaims =
 this.claims.filter(c => c.status === 'pending').length;
 
-     this.revenue =
-this.sales.reduce(
+        this.totalSales =
+  this.sales.length;
 
+    this.revenue =
+this.sales
+.reduce(
   (sum,sale)=>
-
   sum + Number(sale.amount || 0),
-
   0
-
 );
 
-  },
-    
+    },
+
     renderCharts(){
 
       this.renderClaimsChart();
@@ -365,7 +389,7 @@ this.sales.reduce(
       labels:['Pending','Approved','Rejected'],
       datasets:[{
         data:[
-         this.pendingClaims,
+          this.claims.filter(c=>c.status==='pending').length,
           this.approvedClaims,
           this.rejectedClaims
         ],
@@ -446,22 +470,22 @@ this.categoryChart = new Chart(ctx,{
 
     },
 
-    renderRevenueChart(){
+renderRevenueChart(){
 
-     const revenueData = {};
+  const revenueData = {};
 
-this.sales.forEach(sale => {
+  this.sales.forEach(sale => {
 
-  const date =
-  sale.createdAt?.toDate
-  ? sale.createdAt.toDate().toLocaleDateString()
-  : 'Unknown';
+    const date =
+    sale.createdAt?.toDate
+    ? sale.createdAt.toDate().toLocaleDateString()
+    : 'Unknown';
 
-  revenueData[date] =
-  (revenueData[date] || 0)
-  + Number(sale.amount || 0);
+    revenueData[date] =
+    (revenueData[date] || 0)
+    + Number(sale.amount || 0);
 
-});
+  });
 
       const ctx =
       document.getElementById('revenueChart');
