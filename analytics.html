@@ -104,7 +104,7 @@
 
   <!-- KPI STATS -->
 
-  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+  <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
 
     <div class="glass rounded-3xl p-5 glow">
       <p class="text-gray-400 text-sm">TOTAL CLAIMS</p>
@@ -120,6 +120,12 @@
       <p class="text-gray-400 text-sm">REJECTED</p>
       <h2 class="text-3xl font-black mt-2 text-red-300" x-text="rejectedClaims"></h2>
     </div>
+
+    <div class="glass rounded-3xl p-5 glow">
+  <p class="text-gray-400 text-sm">PENDING</p>
+  <h2 class="text-3xl font-black mt-2 text-yellow-300"
+      x-text="pendingClaims"></h2>
+</div>
 
     <div class="glass rounded-3xl p-5 glow">
       <p class="text-gray-400 text-sm">REVENUE</p>
@@ -201,11 +207,13 @@ function analyticsApp(){
 
     claims:[],
     products:[],
+    sales:[],
 
-    approvedClaims:0,
-    rejectedClaims:0,
-    revenue:0,
-
+   approvedClaims:0,
+rejectedClaims:0,
+pendingClaims:0,
+revenue:0,
+    
     claimsChart:null,
     categoryChart:null,
     revenueChart:null,
@@ -227,15 +235,30 @@ function analyticsApp(){
 
       firebase.auth().onAuthStateChanged(user => {
 
-        if(!user){
+  if(!user){
 
-          window.location.href='login.html';
-          return;
+    window.location.href='login.html';
+    return;
 
-        }
+  }
 
-      });
+  const adminEmails = [
+    'vedantbhalge2006@gmail.com'
+  ];
 
+  if(!adminEmails.includes(user.email)){
+
+    alert('Access denied');
+
+    firebase.auth().signOut();
+
+    window.location.href='login.html';
+
+    return;
+
+  }
+
+});
       this.db = firebase.firestore();
 
       this.loadData();
@@ -243,32 +266,48 @@ function analyticsApp(){
     },
 
    loadData(){
+     this.db
+.collection('claims')
+.onSnapshot(snapshot => {
+
+  this.claims =
+  snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+
+  this.calculateStats();
+  this.renderCharts();
+
+});
 
   this.db
-  .collection('claims')
-  .onSnapshot(snapshot => {
+.collection('sales')
+.onSnapshot(snapshot => {
 
-    this.claims =
-    snapshot.docs.map(doc => ({
-      id:doc.id,
-      ...doc.data()
-    }));
+  this.sales =
+  snapshot.docs.map(doc => ({
+    id:doc.id,
+    ...doc.data()
+  }));
 
-    this.calculateStats();
+  this.calculateStats();
 
-    this.renderCharts();
+  this.renderCharts();
 
-  });
+});
 
   this.db
   .collection('products')
   .onSnapshot(snapshot => {
 
-    this.products =
-    snapshot.docs.map(doc => ({
-      id:doc.id,
-      ...doc.data()
-    }));
+   this.products =
+snapshot.docs
+.map(doc => ({
+  id:doc.id,
+  ...doc.data()
+}))
+.filter(product => !product.isDeleted);
 
     this.renderCharts();
 
@@ -284,13 +323,22 @@ function analyticsApp(){
       this.rejectedClaims =
       this.claims.filter(c => c.status === 'rejected').length;
 
-      this.revenue =
-      this.claims
-      .filter(c => c.status === 'approved')
-      .reduce((sum,c)=> sum + Number(c.price || 0),0);
+      this.pendingClaims =
+this.claims.filter(c => c.status === 'pending').length;
 
-    },
+     this.revenue =
+this.sales.reduce(
 
+  (sum,sale)=>
+
+  sum + Number(sale.amount || 0),
+
+  0
+
+);
+
+  },
+    
     renderCharts(){
 
       this.renderClaimsChart();
@@ -317,7 +365,7 @@ function analyticsApp(){
       labels:['Pending','Approved','Rejected'],
       datasets:[{
         data:[
-          this.claims.filter(c=>c.status==='pending').length,
+         this.pendingClaims,
           this.approvedClaims,
           this.rejectedClaims
         ],
@@ -400,23 +448,20 @@ this.categoryChart = new Chart(ctx,{
 
     renderRevenueChart(){
 
-      const approved =
-      this.claims.filter(c => c.status === 'approved');
+     const revenueData = {};
 
-      const revenueData = {};
+this.sales.forEach(sale => {
 
-      approved.forEach(claim => {
+  const date =
+  sale.createdAt?.toDate
+  ? sale.createdAt.toDate().toLocaleDateString()
+  : 'Unknown';
 
-        const date =
-        claim.createdAt?.toDate
-        ? claim.createdAt.toDate().toLocaleDateString()
-        : 'Unknown';
+  revenueData[date] =
+  (revenueData[date] || 0)
+  + Number(sale.amount || 0);
 
-        revenueData[date] =
-        (revenueData[date] || 0)
-        + Number(claim.price || 0);
-
-      });
+});
 
       const ctx =
       document.getElementById('revenueChart');
