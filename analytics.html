@@ -280,12 +280,6 @@ this.db = firebase.firestore();
 
 this.loadData();
 
-setInterval(() => {
-
-  this.renderCharts();
-
-}, 5000);
-
 },
 
    loadData(){
@@ -301,7 +295,6 @@ setInterval(() => {
     }));
 
     this.calculateStats();
-    
     this.renderCharts();
 
   });
@@ -322,7 +315,8 @@ this.lowStockCount =
 this.products.filter(
   product => Number(product.stock || 0) <= 5
 ).length;
-this.renderCharts();
+    this.renderCharts();
+
   });
 
      this.db
@@ -336,7 +330,6 @@ this.renderCharts();
   }));
 
   this.calculateStats();
-  
   this.renderCharts();
 
 });
@@ -369,50 +362,35 @@ this.sales
 
 renderCharts(){
 
-  console.log("claimsChart",
-    document.getElementById("claimsChart"));
+  if(
+    !document.getElementById('claimsChart') ||
+    !document.getElementById('categoryChart') ||
+    !document.getElementById('revenueChart') ||
+    !document.getElementById('productsChart')
+  ){
+    return;
+  }
 
-  console.log("categoryChart",
-    document.getElementById("categoryChart"));
-
-  console.log("revenueChart",
-    document.getElementById("revenueChart"));
-
-  console.log("productsChart",
-    document.getElementById("productsChart"));
-
-  this.renderClaimsChart();
+   this.renderClaimsChart();
   this.renderCategoryChart();
   this.renderRevenueChart();
   this.renderProductsChart();
 
 },
     
-  renderClaimsChart(){
+renderClaimsChart(){
 
 const canvas =
 document.getElementById('claimsChart');
 
-  if(!canvas){
-  console.log('claimsChart canvas not found');
-  return;
+if(!canvas) return;
+
+if(this.claimsChart){
+  this.claimsChart.destroy();
 }
 
-const ctx = canvas.getContext('2d');
-
-if(!ctx){
-  console.log('claimsChart context failed');
-  return;
-}
-    
-  if(!ctx) return;
-    
-  if(this.claimsChart){
-    this.claimsChart.destroy();
-  }
-
-  this.claimsChart = new Chart(canvas,{
-
+this.claimsChart = new Chart(canvas,{
+  
     type:'doughnut',
 
     data:{
@@ -658,4 +636,4 @@ this.productsChart = new Chart(canvas,{
 </script>
 
 </body>
-</html>
+</html> 
