@@ -178,6 +178,14 @@
 
       </button>
 
+<button
+  @click="section='orders'; drawerOpen=false"
+  class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-95">
+
+  🚚 Order Management
+
+</button>
+      
       <button
   onclick="window.location.href='analytics.html'"
   class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10">
@@ -210,6 +218,14 @@
 
 </button>
 
+<button
+  @click="exportFullBackup()"
+  class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10">
+
+  💾 Export Backup
+
+</button>
+      
       <button
         onclick="window.location.href='index.html'"
         class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-95">
@@ -893,6 +909,126 @@
 
 </div>
 
+  <!-- ORDER MANAGEMENT -->
+
+<div x-show="section==='orders'">
+
+  <h2 class="text-3xl font-black mb-6">
+    🚚 Order Management
+  </h2>
+
+  <input
+    x-model="orderSearch"
+    placeholder="Search orders..."
+    class="w-full glass rounded-2xl p-4 bg-transparent mb-6">
+
+  <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+    <template
+      x-for="order in filteredOrders()"
+      :key="order.id">
+
+      <div
+        class="glass rounded-3xl p-5 glow">
+
+        <h3
+          class="text-xl font-bold"
+          x-text="order.productName">
+        </h3>
+
+        <p class="text-cyan-300 mt-2">
+          ₹<span x-text="order.price"></span>
+        </p>
+
+        <p class="mt-3">
+          👤
+          <span x-text="order.customerName"></span>
+        </p>
+
+        <p>
+          📞
+          <span x-text="order.contact"></span>
+        </p>
+
+        <p>
+          🚚
+          <span x-text="order.trackingId"></span>
+        </p>
+<div class="mt-4 space-y-3">
+
+  <input
+    :value="order.courierName || ''"
+    @input="order.courierName = $event.target.value"
+    placeholder="Courier Name"
+    class="w-full glass rounded-2xl p-3 bg-transparent">
+
+  <input
+    :value="order.trackingId || ''"
+    @input="order.trackingId = $event.target.value"
+    placeholder="Tracking ID"
+    class="w-full glass rounded-2xl p-3 bg-transparent">
+
+  <input
+    type="date"
+    :value="order.shippedDate || ''"
+    @input="order.shippedDate = $event.target.value"
+    class="w-full glass rounded-2xl p-3 bg-transparent">
+
+  <input
+    type="date"
+    :value="order.deliveryDate || ''"
+    @input="order.deliveryDate = $event.target.value"
+    class="w-full glass rounded-2xl p-3 bg-transparent">
+
+  <textarea
+    :value="order.trackingNotes || ''"
+    @input="order.trackingNotes = $event.target.value"
+    placeholder="Tracking Notes"
+    class="w-full glass rounded-2xl p-3 bg-transparent">
+  </textarea>
+
+</div>
+        <select
+          @change="updateOrderStatus(order,$event.target.value)"
+          class="w-full mt-4 glass rounded-2xl p-3 bg-black">
+
+          <option value="approved"
+            :selected="order.orderStatus==='approved'"
+            Approved
+          </option>
+
+          <option value="packed"
+           :selected="order.orderStatus==='packed'"
+            Packed
+          </option>
+
+          <option value="shipped"
+            :selected="order.orderStatus==='shipped'"
+            Shipped
+          </option>
+
+          <option value="delivered"
+            :selected="order.orderStatus==='delivered'"
+            Delivered
+          </option>
+
+        </select>
+
+<button
+  @click="saveShipmentTracking(order)"
+  class="w-full mt-4 bg-gradient-to-r from-cyan-500 to-emerald-500 px-4 py-3 rounded-2xl font-bold">
+
+  SAVE TRACKING
+
+</button>
+
+</div>
+
+    </template>
+
+  </div>
+
+</div>
   <!-- CLAIM BIN -->
 
   <div x-show="section==='bin'">
@@ -1024,9 +1160,27 @@
 
       <div class="glass rounded-2xl p-4">
 
-        <div class="font-bold text-cyan-300"
-             x-text="log.action">
-        </div>
+        <div
+  class="inline-block px-3 py-1 rounded-xl text-sm font-bold"
+  :class="{
+    'bg-emerald-500/20 text-emerald-300':
+      log.action.includes('ADDED')
+      || log.action.includes('APPROVED')
+      || log.action.includes('RESTORED'),
+
+    'bg-red-500/20 text-red-300':
+      log.action.includes('DELETED')
+      || log.action.includes('REJECTED'),
+
+    'bg-yellow-500/20 text-yellow-300':
+      log.action.includes('UPDATED')
+      || log.action.includes('RESTOCKED'),
+
+    'bg-cyan-500/20 text-cyan-300':
+      true
+  }"
+  x-text="log.action">
+</div>
 
         <div class="text-sm text-gray-300 mt-2">
 
@@ -1268,6 +1422,8 @@ function adminApp(){
 
     drawerOpen:false,
     section:'kits',
+    orders:[],
+orderSearch:'',
     claimFilter:'all',
     
     claimSearch:'',
@@ -1344,6 +1500,18 @@ auth.onAuthStateChanged(user => {
     return;
   }
 
+  if(!this._loginLogged){
+
+  this._loginLogged = true;
+
+  this.logActivity(
+    'ADMIN_LOGIN',
+    {
+      email:user.email
+    }
+  );
+
+}
 });
 
       this.db = firebase.firestore();
@@ -1428,6 +1596,18 @@ snapshot.docs
   }));
 
 });
+      this.db
+.collection('claims')
+.where('status','==','approved')
+.onSnapshot(snapshot => {
+
+  this.orders =
+  snapshot.docs.map(doc => ({
+    id:doc.id,
+    ...doc.data()
+  }));
+
+});
 
     },
 
@@ -1474,6 +1654,33 @@ snapshot.docs
   }
 
   return filtered;
+
+},
+    filteredOrders(){
+
+  if(!this.orderSearch){
+    return this.orders;
+  }
+
+  return this.orders.filter(order =>
+
+    (order.customerName || '')
+    .toLowerCase()
+    .includes(this.orderSearch.toLowerCase())
+
+    ||
+
+    (order.productName || '')
+    .toLowerCase()
+    .includes(this.orderSearch.toLowerCase())
+
+    ||
+
+    (order.trackingId || '')
+    .toLowerCase()
+    .includes(this.orderSearch.toLowerCase())
+
+  );
 
 },
     
@@ -1962,7 +2169,120 @@ async deleteKit(id){
   }
 
 },
-    async logout(){
+async updateOrderStatus(order,status){
+
+  try{
+    
+await this.db
+.collection('claims')
+.doc(order.id)
+.update({
+
+  orderStatus:status,
+
+  shippedDate:
+    status === 'shipped'
+    ? new Date().toISOString().split('T')[0]
+    : order.shippedDate || '',
+
+  updatedAt:
+    firebase.firestore.FieldValue.serverTimestamp()
+
+});
+    await this.logActivity(
+  'ORDER_STATUS_UPDATED',
+  {
+    customer:order.customerName,
+    product:order.productName,
+    newStatus:status
+  }
+);
+     this.showToast(
+      'success',
+      'ORDER UPDATED',
+      status.toUpperCase()
+    );
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    this.showToast(
+      'error',
+      'UPDATE FAILED',
+      error.message
+    );
+
+  }
+
+},
+   async saveShipmentTracking(order){
+
+  try{
+
+    await this.db
+    .collection('claims')
+    .doc(order.id)
+    .update({
+
+      courierName:
+        order.courierName || '',
+
+      trackingId:
+        order.trackingId || '',
+
+      shippedDate:
+        order.shippedDate || '',
+
+      deliveryDate:
+        order.deliveryDate || '',
+
+      trackingNotes:
+        order.trackingNotes || '',
+
+      updatedAt:
+      firebase.firestore.FieldValue.serverTimestamp()
+
+    });
+
+    await this.logActivity(
+      'SHIPMENT_UPDATED',
+      {
+        customer:order.customerName,
+        product:order.productName,
+        trackingId:order.trackingId
+      }
+    );
+
+    this.showToast(
+      'success',
+      'TRACKING SAVED',
+      'Shipment details updated'
+    );
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    this.showToast(
+      'error',
+      'SAVE FAILED',
+      error.message
+    );
+
+  }
+
+},
+   async logout(){
+
+  await this.logActivity(
+    'ADMIN_LOGOUT',
+    {}
+  );
 
   await firebase.auth().signOut();
 
@@ -2056,10 +2376,16 @@ productDoc.data();
           });
 
           transaction.update(claimRef,{
-            status:newStatus,
-            updatedAt:
-            firebase.firestore.FieldValue.serverTimestamp()
-          });
+  status:newStatus,
+
+  orderStatus:
+    newStatus === 'approved'
+      ? 'approved'
+      : firebase.firestore.FieldValue.delete(),
+
+  updatedAt:
+  firebase.firestore.FieldValue.serverTimestamp()
+});
 
         });
 
@@ -2551,10 +2877,127 @@ removeToast(id){
   );
 
 },
+    async exportFullBackup(){
+
+  try{
+
+    const productsSnapshot =
+    await this.db.collection('products').get();
+
+    const claimsSnapshot =
+    await this.db.collection('claims').get();
+
+    const claimBinSnapshot =
+    await this.db.collection('claimBin').get();
+
+    const salesSnapshot =
+    await this.db.collection('sales').get();
+
+    const logsSnapshot =
+    await this.db.collection('activityLogs').get();
+
+    const backupData = {
+
+      exportedAt:
+      new Date().toISOString(),
+
+      products:
+      productsSnapshot.docs.map(doc=>({
+        id:doc.id,
+        ...doc.data()
+      })),
+
+      claims:
+      claimsSnapshot.docs.map(doc=>({
+        id:doc.id,
+        ...doc.data()
+      })),
+
+      claimBin:
+      claimBinSnapshot.docs.map(doc=>({
+        id:doc.id,
+        ...doc.data()
+      })),
+
+      sales:
+      salesSnapshot.docs.map(doc=>({
+        id:doc.id,
+        ...doc.data()
+      })),
+
+      activityLogs:
+      logsSnapshot.docs.map(doc=>({
+        id:doc.id,
+        ...doc.data()
+      }))
+
+    };
+
+    const blob = new Blob(
+
+      [
+        JSON.stringify(
+          backupData,
+          null,
+          2
+        )
+      ],
+
+      {
+        type:'application/json'
+      }
+
+    );
+
+    const link =
+    document.createElement('a');
+
+    link.href =
+    URL.createObjectURL(blob);
+
+    link.download =
+    `kurozenaku-backup-${Date.now()}.json`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    await this.logActivity(
+      'DATABASE_BACKUP_EXPORTED',
+      {
+        products:
+        backupData.products.length,
+
+        claims:
+        backupData.claims.length,
+
+        sales:
+        backupData.sales.length
+      }
+    );
+
+    this.showToast(
+      'success',
+      'BACKUP EXPORTED',
+      'Database backup downloaded'
+    );
+
   }
 
-}
+ catch(error){
 
+  console.error(error);
+
+  this.showToast(
+    'error',
+    'BACKUP FAILED',
+    error.message
+  ),
+  },
+
+}
 </script>
 
 </body>
