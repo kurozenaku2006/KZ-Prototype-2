@@ -281,9 +281,18 @@ this.db = firebase.firestore();
 this.loadData();
 
 setInterval(() => {
-  this.renderCharts();
-}, 1000);
 
+  if(
+    document.getElementById('claimsChart') &&
+    document.getElementById('categoryChart') &&
+    document.getElementById('revenueChart') &&
+    document.getElementById('productsChart')
+  ){
+    this.renderCharts();
+  }
+
+}, 3000);
+      
 },
 
    loadData(){
@@ -299,6 +308,7 @@ setInterval(() => {
     }));
 
     this.calculateStats();
+    this.renderCharts();
 
   });
 
@@ -318,7 +328,7 @@ this.lowStockCount =
 this.products.filter(
   product => Number(product.stock || 0) <= 5
 ).length;
-
+this.renderCharts();
   });
 
      this.db
@@ -332,6 +342,7 @@ this.products.filter(
   }));
 
   this.calculateStats();
+  this.renderCharts();
 
 });
 
