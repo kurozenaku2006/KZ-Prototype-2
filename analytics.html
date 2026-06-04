@@ -282,17 +282,10 @@ this.loadData();
 
 setInterval(() => {
 
-  if(
-    document.getElementById('claimsChart') &&
-    document.getElementById('categoryChart') &&
-    document.getElementById('revenueChart') &&
-    document.getElementById('productsChart')
-  ){
-    this.renderCharts();
-  }
+  this.renderCharts();
 
-}, 3000);
-      
+}, 5000);
+
 },
 
    loadData(){
@@ -308,6 +301,7 @@ setInterval(() => {
     }));
 
     this.calculateStats();
+    
     this.renderCharts();
 
   });
@@ -342,6 +336,7 @@ this.renderCharts();
   }));
 
   this.calculateStats();
+  
   this.renderCharts();
 
 });
@@ -398,9 +393,7 @@ renderCharts(){
 const canvas =
 document.getElementById('claimsChart');
 
-    if(!canvas) return;
-    
-if(!canvas){
+  if(!canvas){
   console.log('claimsChart canvas not found');
   return;
 }
