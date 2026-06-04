@@ -266,7 +266,43 @@
     </div>
 
   </div>
+  <div class="glass rounded-3xl p-4 mb-6">
 
+<div class="grid md:grid-cols-3 gap-3">
+
+<input
+x-model="minPrice"
+type="number"
+placeholder="Min Price"
+class="glass rounded-2xl p-3 bg-transparent">
+
+<input
+x-model="maxPrice"
+type="number"
+placeholder="Max Price"
+class="glass rounded-2xl p-3 bg-transparent">
+
+<select
+x-model="sortBy"
+class="glass rounded-2xl p-3 bg-black text-white">
+
+<option value="default">
+Sort Products
+</option>
+
+<option value="low">
+Price Low → High
+</option>
+
+<option value="high">
+Price High → Low
+</option>
+
+</select>
+
+</div>
+
+</div>
   <!-- PRODUCTS -->
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
@@ -287,6 +323,22 @@
           class="font-bold text-lg mb-2"
           x-text="p.name">
         </h2>
+
+        <button
+@click="toggleWishlist(p)"
+class="mb-3 text-xl">
+
+<span
+x-show="!isWishlisted(p)">
+🤍
+</span>
+
+<span
+x-show="isWishlisted(p)">
+❤️
+</span>
+
+</button>
 
         <div class="flex justify-between items-center mb-3">
 
@@ -562,6 +614,76 @@ Status:
 </div>
 
 </div>
+  <!-- WISHLIST MODAL -->
+
+<div
+x-show="wishlistModal"
+x-transition.opacity
+class="fixed inset-0 bg-black/80 z-[90]"
+@click="wishlistModal=false">
+</div>
+
+<div
+x-show="wishlistModal"
+x-transition
+class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+
+<div
+@click.stop
+class="glass rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+
+<h2 class="text-3xl font-black mb-5">
+
+⭐ Wishlist
+
+</h2>
+
+<div class="space-y-3">
+
+<template x-for="item in wishlist">
+
+<div
+class="glass rounded-2xl p-4 flex justify-between items-center">
+
+<div>
+
+<p
+class="font-bold"
+x-text="item.name">
+</p>
+
+<p
+class="text-cyan-300">
+₹<span x-text="item.price"></span>
+</p>
+
+</div>
+
+<button
+@click="toggleWishlist(item)"
+class="bg-red-500 px-4 py-2 rounded-xl">
+
+Remove
+
+</button>
+
+</div>
+
+</template>
+
+<div
+x-show="wishlist.length===0"
+class="text-center text-gray-400 py-8">
+
+No items in wishlist
+
+</div>
+
+</div>
+
+</div>
+
+</div>
   <!-- ADMIN LOGIN OVERLAY -->
 
   <div
@@ -650,6 +772,12 @@ function app(){
     search:'',
     category:'ALL',
 
+    minPrice:'',
+
+maxPrice:'',
+
+sortBy:'default',
+
     products:[],
 
     pending:{},
@@ -667,6 +795,9 @@ historyModal:false,
 historyContact:'',
 
 historyOrders:[],
+    
+    wishlist:[],
+wishlistModal:false,
 
     selectedProduct:null,
 
@@ -703,6 +834,16 @@ historyOrders:[],
 
       const db = firebase.firestore();
 
+      const savedWishlist =
+localStorage.getItem('kzWishlist');
+
+if(savedWishlist){
+
+  this.wishlist =
+  JSON.parse(savedWishlist);
+
+}
+
       db.collection('products')
       .onSnapshot(snapshot => {
 
@@ -715,26 +856,102 @@ historyOrders:[],
 
     },
 
-    filteredProducts(){
+filteredProducts(){
 
-      return this.products.filter(p =>
+  let items = this.products.filter(p => {
 
-        (p.name || '')
-        .toLowerCase()
-        .includes(this.search.toLowerCase())
-
-        &&
-
-        (
-          this.category === 'ALL'
-          ||
-          p.category === this.category
-        )
-
+    const matchesSearch =
+      (p.name || '')
+      .toLowerCase()
+      .includes(
+        this.search.toLowerCase()
       );
 
-    },
+    const matchesCategory =
+      this.category === 'ALL'
+      ||
+      p.category === this.category;
 
+    const matchesMin =
+      !this.minPrice
+      ||
+      p.price >= Number(this.minPrice);
+
+    const matchesMax =
+      !this.maxPrice
+      ||
+      p.price <= Number(this.maxPrice);
+
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesMin &&
+      matchesMax
+    );
+
+  });
+
+  if(this.sortBy === 'low'){
+
+   items.sort(
+  (a,b) => Number(a.price) - Number(b.price)
+);
+
+  }
+
+  if(this.sortBy === 'high'){
+
+   items.sort(
+  (a,b) => Number(b.price) - Number(a.price)
+);
+
+  }
+
+  return items;
+
+},
+    toggleWishlist(product){
+
+  const exists =
+  this.wishlist.find(
+    item => item.id === product.id
+  );
+
+  if(exists){
+
+    this.wishlist =
+    this.wishlist.filter(
+      item => item.id !== product.id
+    );
+
+  }else{
+
+    this.wishlist.push(product);
+
+  }
+
+  localStorage.setItem(
+    'kzWishlist',
+    JSON.stringify(this.wishlist)
+  );
+
+},
+
+isWishlisted(product){
+
+  return this.wishlist.some(
+    item => item.id === product.id
+  );
+
+},
+
+openWishlistPanel(){
+
+  this.menuOpen = false;
+
+  this.wishlistModal = true;
+
+},
     claimProduct(p){
 
       if(this.pending[p.id] || p.stock <= 0){
@@ -835,14 +1052,6 @@ this.pending[p.id] = false;
       this.menuOpen = false;
 
       alert('Customer claims panel coming next');
-
-    },
-
-    openWishlistPanel(){
-
-      this.menuOpen = false;
-
-      alert('Wishlist system coming next');
 
     },
 
