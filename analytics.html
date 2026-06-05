@@ -104,7 +104,7 @@
 
   <!-- KPI STATS -->
 
-  <div class="grid grid-cols-2 lg:grid-cols-10 gap-4 mb-8">
+  <div class="grid grid-cols-2 lg:grid-cols-11 gap-4 mb-8">
 
     <div class="glass rounded-3xl p-5 glow">
       <p class="text-gray-400 text-sm">TOTAL CLAIMS</p>
@@ -154,7 +154,20 @@
   <h2 class="text-3xl font-black mt-2 text-red-400"
       x-text="lowStockCount"></h2>
 </div>
+<div class="glass rounded-3xl p-5 glow">
 
+  <p class="text-gray-400 text-sm">
+    INVENTORY VALUE
+  </p>
+
+  <h2
+    class="text-3xl font-black mt-2 text-cyan-300">
+
+    ₹<span x-text="inventoryValue"></span>
+
+  </h2>
+
+</div>
     <div class="glass rounded-3xl p-5 glow">
       <p class="text-gray-400 text-sm">TOTAL PRODUCTS</p>
       <h2 class="text-3xl font-black mt-2 text-orange-300" x-text="products.length"></h2>
@@ -245,12 +258,13 @@ lowStockCount:0,
     
     totalSales:0,
 
-    approvedClaims:0,
+  approvedClaims:0,
 rejectedClaims:0,
 pendingClaims:0,
 revenue:0,
 
 monthlyRevenue:0,
+inventoryValue:0,
 
     claimsChart:null,
     categoryChart:null,
@@ -454,6 +468,23 @@ this.sales
   (sum,sale)=>
   sum + Number(sale.amount || 0),
   0
+);
+      
+      this.inventoryValue =
+this.products.reduce(
+
+  (total,product) =>
+
+    total +
+
+    (
+      Number(product.price || 0)
+      *
+      Number(product.stock || 0)
+    ),
+
+  0
+
 );
     },
 
