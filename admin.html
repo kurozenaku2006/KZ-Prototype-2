@@ -1152,10 +1152,27 @@
 
       <div class="glass rounded-2xl p-4">
 
-        <div class="font-bold text-cyan-300"
-             x-text="log.action">
-        </div>
+        <div
+  class="inline-block px-3 py-1 rounded-xl text-sm font-bold"
+  :class="{
+    'bg-emerald-500/20 text-emerald-300':
+      log.action.includes('ADDED')
+      || log.action.includes('APPROVED')
+      || log.action.includes('RESTORED'),
 
+    'bg-red-500/20 text-red-300':
+      log.action.includes('DELETED')
+      || log.action.includes('REJECTED'),
+
+    'bg-yellow-500/20 text-yellow-300':
+      log.action.includes('UPDATED')
+      || log.action.includes('RESTOCKED'),
+
+    'bg-cyan-500/20 text-cyan-300':
+      true
+  }"
+  x-text="log.action">
+</div>
         <div class="text-sm text-gray-300 mt-2">
 
           Admin:
