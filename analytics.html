@@ -104,7 +104,7 @@
 
   <!-- KPI STATS -->
 
-  <div class="grid grid-cols-2 lg:grid-cols-9 gap-4 mb-8">
+  <div class="grid grid-cols-2 lg:grid-cols-10 gap-4 mb-8">
 
     <div class="glass rounded-3xl p-5 glow">
       <p class="text-gray-400 text-sm">TOTAL CLAIMS</p>
@@ -133,7 +133,16 @@
         ₹<span x-text="revenue"></span>
       </h2>
     </div>
+<div class="glass rounded-3xl p-5 glow">
+  <p class="text-gray-400 text-sm">MONTHLY REVENUE</p>
 
+  <h2
+    class="text-3xl font-black mt-2 text-green-300">
+
+    ₹<span x-text="monthlyRevenue"></span>
+
+  </h2>
+</div>
     <div class="glass rounded-3xl p-5 glow">
   <p class="text-gray-400 text-sm">TOTAL SALES</p>
   <h2 class="text-3xl font-black mt-2 text-purple-300"
@@ -237,9 +246,11 @@ lowStockCount:0,
     totalSales:0,
 
     approvedClaims:0,
-    rejectedClaims:0,
-    pendingClaims:0,
-    revenue:0,
+rejectedClaims:0,
+pendingClaims:0,
+revenue:0,
+
+monthlyRevenue:0,
 
     claimsChart:null,
     categoryChart:null,
@@ -416,7 +427,34 @@ this.sales
   sum + Number(sale.amount || 0),
   0
 );
+const currentMonth =
+new Date().getMonth();
 
+const currentYear =
+new Date().getFullYear();
+
+this.monthlyRevenue =
+this.sales
+.filter(sale => {
+
+  if(!sale.createdAt?.toDate){
+    return false;
+  }
+
+  const saleDate =
+  sale.createdAt.toDate();
+
+  return (
+    saleDate.getMonth() === currentMonth &&
+    saleDate.getFullYear() === currentYear
+  );
+
+})
+.reduce(
+  (sum,sale)=>
+  sum + Number(sale.amount || 0),
+  0
+);
     },
 
 renderCharts(){
