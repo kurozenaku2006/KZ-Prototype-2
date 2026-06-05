@@ -218,14 +218,6 @@
 
 </button>
 
-<button
-  @click="exportFullBackup()"
-  class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10">
-
-  💾 Export Backup
-
-</button>
-      
       <button
         onclick="window.location.href='index.html'"
         class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-95">
@@ -1160,27 +1152,9 @@
 
       <div class="glass rounded-2xl p-4">
 
-        <div
-  class="inline-block px-3 py-1 rounded-xl text-sm font-bold"
-  :class="{
-    'bg-emerald-500/20 text-emerald-300':
-      log.action.includes('ADDED')
-      || log.action.includes('APPROVED')
-      || log.action.includes('RESTORED'),
-
-    'bg-red-500/20 text-red-300':
-      log.action.includes('DELETED')
-      || log.action.includes('REJECTED'),
-
-    'bg-yellow-500/20 text-yellow-300':
-      log.action.includes('UPDATED')
-      || log.action.includes('RESTOCKED'),
-
-    'bg-cyan-500/20 text-cyan-300':
-      true
-  }"
-  x-text="log.action">
-</div>
+        <div class="font-bold text-cyan-300"
+             x-text="log.action">
+        </div>
 
         <div class="text-sm text-gray-300 mt-2">
 
@@ -2877,131 +2851,11 @@ removeToast(id){
   );
 
 },
-    async exportFullBackup(){
-
-  try{
-
-    const productsSnapshot =
-    await this.db.collection('products').get();
-
-    const claimsSnapshot =
-    await this.db.collection('claims').get();
-
-    const claimBinSnapshot =
-    await this.db.collection('claimBin').get();
-
-    const salesSnapshot =
-    await this.db.collection('sales').get();
-
-    const logsSnapshot =
-    await this.db.collection('activityLogs').get();
-
-    const backupData = {
-
-      exportedAt:
-      new Date().toISOString(),
-
-      products:
-      productsSnapshot.docs.map(doc=>({
-        id:doc.id,
-        ...doc.data()
-      })),
-
-      claims:
-      claimsSnapshot.docs.map(doc=>({
-        id:doc.id,
-        ...doc.data()
-      })),
-
-      claimBin:
-      claimBinSnapshot.docs.map(doc=>({
-        id:doc.id,
-        ...doc.data()
-      })),
-
-      sales:
-      salesSnapshot.docs.map(doc=>({
-        id:doc.id,
-        ...doc.data()
-      })),
-
-      activityLogs:
-      logsSnapshot.docs.map(doc=>({
-        id:doc.id,
-        ...doc.data()
-      }))
-
-    };
-
-    const blob = new Blob(
-
-      [
-        JSON.stringify(
-          backupData,
-          null,
-          2
-        )
-      ],
-
-      {
-        type:'application/json'
-      }
-
-    );
-
-    const link =
-    document.createElement('a');
-
-    link.href =
-    URL.createObjectURL(blob);
-
-    link.download =
-    `kurozenaku-backup-${Date.now()}.json`;
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-
-    await this.logActivity(
-      'DATABASE_BACKUP_EXPORTED',
-      {
-        products:
-        backupData.products.length,
-
-        claims:
-        backupData.claims.length,
-
-        sales:
-        backupData.sales.length
-      }
-    );
-
-    this.showToast(
-      'success',
-      'BACKUP EXPORTED',
-      'Database backup downloaded'
-    );
-
   }
 
- catch(error){
-
-  console.error(error);
-
-  this.showToast(
-    'error',
-    'BACKUP FAILED',
-    error.message
-    );
-   
-  },
-      
-};
-    
 }
+
 </script>
 
 </body>
-</html>
+</html> 
