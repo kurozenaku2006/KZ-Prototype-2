@@ -351,6 +351,9 @@ this.lowStockCount =
 this.products.filter(
   product => Number(product.stock || 0) <= 5
 ).length;
+
+    this.calculateStats();
+    
     this.renderCharts();
 
   });
