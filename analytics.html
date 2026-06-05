@@ -330,7 +330,7 @@ this.products.filter(
 
   });
 
-     this.db
+    this.db
 .collection('sales')
 .onSnapshot(snapshot => {
 
@@ -341,6 +341,9 @@ this.products.filter(
   }));
 
   this.calculateStats();
+
+  this.calculateBestSellingProduct();
+
   this.renderCharts();
 
 });
