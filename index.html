@@ -894,24 +894,80 @@ recentModal:false,
     adminPasscode:'',
 
     claimForm:{
-      name:'',
-      contact:'',
-      address:'',
-      note:''
-    },
+  name:'',
+  contact:'',
+  address:'',
+  note:''
+},
+    
+isLoggedIn(){
 
-    init(){
+  return localStorage.getItem(
+    "kzUserId"
+  );
 
-      const firebaseConfig = {
+},
+    
+   init(){
 
-        apiKey:'AIzaSyByLURDPjEbLepc3Wz3O1MAYYLXSeu04Zg',
+  const action =
+  localStorage.getItem(
+    "redirectAfterLogin"
+  );
 
-        authDomain:'kurozenaku-gundam-store.firebaseapp.com',
+  if(action){
 
-        projectId:'kurozenaku-gundam-store'
+    localStorage.removeItem(
+      "redirectAfterLogin"
+    );
 
-      };
+    if(action === "wishlist"){
+      this.wishlistModal = true;
+    }
 
+    if(action === "recent"){
+      this.recentModal = true;
+    }
+
+    if(action === "tracking"){
+      this.trackingModal = true;
+    }
+
+    if(action === "history"){
+      this.historyModal = true;
+    }
+if(action === "claim"){
+
+  const product =
+  localStorage.getItem(
+    "selectedProduct"
+  );
+
+  if(product){
+
+    this.selectedProduct =
+    JSON.parse(product);
+
+    this.claimModal = true;
+
+    localStorage.removeItem(
+      "selectedProduct"
+    );
+
+  }
+
+}
+  }
+
+  const firebaseConfig = {
+
+    apiKey:'AIzaSyByLURDPjEbLepc3Wz3O1MAYYLXSeu04Zg',
+
+    authDomain:'kurozenaku-gundam-store.firebaseapp.com',
+
+    projectId:'kurozenaku-gundam-store'
+
+  };
       if(!firebase.apps.length){
 
         firebase.initializeApp(firebaseConfig);
@@ -1009,6 +1065,20 @@ filteredProducts(){
 },
     toggleWishlist(product){
 
+  if(!this.isLoggedIn()){
+
+    localStorage.setItem(
+      "redirectAfterLogin",
+      "wishlist"
+    );
+
+    window.location.href =
+    "auth.html";
+
+    return;
+
+  }
+
   const exists =
   this.wishlist.find(
     item => item.id === product.id
@@ -1028,7 +1098,7 @@ filteredProducts(){
   }
 
   localStorage.setItem(
-    'kzWishlist',
+    "kzWishlist",
     JSON.stringify(this.wishlist)
   );
 
@@ -1047,6 +1117,40 @@ openWishlistPanel(){
   this.menuOpen = false;
 
   this.wishlistModal = true;
+
+},
+
+    requireLogin(action){
+
+  if(!this.isLoggedIn()){
+
+    localStorage.setItem(
+      "redirectAfterLogin",
+      action
+    );
+
+    window.location.href =
+    "auth.html";
+
+    return;
+
+  }
+
+  if(action==="wishlist"){
+    this.openWishlistPanel();
+  }
+
+  if(action==="recent"){
+    this.openRecentPanel();
+  }
+
+  if(action==="history"){
+    this.openHistoryPanel();
+  }
+
+  if(action==="tracking"){
+    this.openTrackingPanel();
+  }
 
 },
     openRecentPanel(){
@@ -1078,7 +1182,26 @@ addToRecent(product){
   );
 
 },
-   claimProduct(p){
+  claimProduct(p){
+
+  if(!this.isLoggedIn()){
+
+    localStorage.setItem(
+      "redirectAfterLogin",
+      "claim"
+    );
+
+    localStorage.setItem(
+      "selectedProduct",
+      JSON.stringify(p)
+    );
+
+    window.location.href =
+    "auth.html";
+
+    return;
+
+  }
 
   this.addToRecent(p);
 
@@ -1086,32 +1209,20 @@ addToRecent(product){
     return;
   }
 
-      this.selectedProduct = p;
+  this.selectedProduct = p;
 
-      this.claimForm = {
+  this.claimModal = true;
 
-        name:'',
-        contact:'',
-        address:'',
-        note:''
-
-      };
-
-      this.claimModal = true;
-
-    },
+},
 
     async submitClaim(){
 
-      if(
-        !this.claimForm.name ||
-        !this.claimForm.contact ||
-        !this.claimForm.address
-      ){
-
-        return alert('Please fill required fields');
-
-      }
+if(
+  !localStorage.getItem("kzUserId")
+){
+  alert("Please login first");
+  return;
+}
 
       const p = this.selectedProduct;
 
@@ -1132,11 +1243,14 @@ await db.collection('claims').add({
   productName:p.name,
   price:p.price,
 
-  customerName:this.claimForm.name,
+  customerName:
+localStorage.getItem("kzUserName"),
 
-  contact:this.claimForm.contact,
+contact:
+localStorage.getItem("kzUserPhone"),
 
-  address:this.claimForm.address,
+address:
+localStorage.getItem("kzUserAddress"),
 
   note:this.claimForm.note || '',
 
@@ -1252,7 +1366,9 @@ async loadOrderHistory(){
   firebase.firestore();
 
   let contact =
-this.historyContact.trim();
+localStorage.getItem(
+  "kzUserPhone"
+);
 
 const snapshot =
 await db
