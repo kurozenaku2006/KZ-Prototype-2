@@ -234,7 +234,7 @@
       </button>
 
       <button
-  @click="openTrackingPanel()"
+  @click="requireLogin('tracking')"
   class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10">
 
   🚚 Track Order
@@ -242,7 +242,7 @@
 </button>
 
       <button
-  @click="openHistoryPanel()"
+  @click="requireLogin('history')"
   class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10">
 
   📜 Order History
@@ -250,7 +250,7 @@
 </button>
 
       <button
-        @click="openWishlistPanel()"
+        @click="requireLogin('wishlist')"
         class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10">
 
         ⭐ Wishlist
@@ -258,7 +258,7 @@
       </button>
       
 <button
-@click="openRecentPanel()"
+@click="requireLogin('recent')"
 class="w-full glass p-4 rounded-2xl text-left hover:bg-white/10">
 
 🕒 Recently Viewed
