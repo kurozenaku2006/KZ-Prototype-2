@@ -412,10 +412,10 @@ x-show="isWishlisted(p)">
   </div>
 
   <div
-    x-show="claimModal"
-    x-transition
-    class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-
+x-show="historyModal"
+x-transition
+class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+    
     <div
       @click.stop
       class="glass rounded-3xl p-6 w-full max-w-2xl border border-cyan-500/20 shadow-[0_0_50px_rgba(0,255,255,.2)]">
@@ -509,20 +509,27 @@ class="fixed inset-0 bg-black/80 z-[90]"
 </div>
 
 <div
-x-show="trackingModal"
+x-show="historyModal"
 x-transition
-class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
 
 <div
 @click.stop
 class="glass rounded-3xl p-6 w-full max-w-lg">
 
-<h2 class="text-3xl font-black mb-5">
+<div class="flex justify-between items-center mb-5">
 
+<h2 class="text-3xl font-black">
 🚚 Track Order
-
 </h2>
 
+<button
+@click="trackingModal=false"
+class="glass px-3 py-2 rounded-xl hover:bg-white/10">
+✕
+</button>
+
+</div>
 <input
 x-model="trackingId"
 placeholder="Enter Tracking ID"
@@ -570,19 +577,27 @@ class="fixed inset-0 bg-black/80 z-[90]"
 <div
 x-show="historyModal"
 x-transition
-class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-
+class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+  
 <div
 @click.stop
 class="glass rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
 
-<h2 class="text-3xl font-black mb-5">
+<div class="flex justify-between items-center mb-5">
 
+<h2 class="text-3xl font-black">
 📜 Order History
-
 </h2>
 
-<input
+<button
+@click="historyModal=false"
+class="glass px-3 py-2 rounded-xl hover:bg-white/10">
+✕
+</button>
+
+</div>
+  
+  <input
 x-model="historyContact"
 placeholder="Enter WhatsApp / Discord / Contact"
 class="w-full glass rounded-2xl p-4 bg-transparent mb-4">
@@ -634,19 +649,27 @@ class="fixed inset-0 bg-black/80 z-[90]"
 </div>
 
 <div
-x-show="wishlistModal"
+x-show="historyModal"
 x-transition
-class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
 
-<div
+  <div
 @click.stop
 class="glass rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
 
-<h2 class="text-3xl font-black mb-5">
+<div class="flex justify-between items-center mb-5">
 
+<h2 class="text-3xl font-black">
 ⭐ Wishlist
-
 </h2>
+
+<button
+@click="wishlistModal=false"
+class="glass px-3 py-2 rounded-xl hover:bg-white/10">
+✕
+</button>
+
+</div>
 
 <div class="space-y-3">
 
@@ -704,19 +727,27 @@ class="fixed inset-0 bg-black/80 z-[90]"
 </div>
 
 <div
-x-show="recentModal"
+x-show="historyModal"
 x-transition
-class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-
+class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+  
 <div
 @click.stop
 class="glass rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
 
-<h2 class="text-3xl font-black mb-5">
+<div class="flex justify-between items-center mb-5">
 
+<h2 class="text-3xl font-black">
 🕒 Recently Viewed
-
 </h2>
+
+<button
+@click="recentModal=false"
+class="glass px-3 py-2 rounded-xl hover:bg-white/10">
+✕
+</button>
+
+</div>
 
 <div class="space-y-3">
 
@@ -769,10 +800,10 @@ No recently viewed kits
 
   <!-- ADMIN LOGIN MODAL -->
 
-  <div
-    x-show="adminLoginOpen"
-    x-transition
-    class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+ <div
+x-show="historyModal"
+x-transition
+class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
 
     <div
       @click.stop
@@ -929,15 +960,18 @@ if(savedRecent){
   JSON.parse(savedRecent);
 
 }
-      db.collection('products')
-      .onSnapshot(snapshot => {
+     db.collection('products')
+.onSnapshot(snapshot => {
 
-        this.products = snapshot.docs.map(doc => ({
-          id:doc.id,
-          ...doc.data()
-        }));
+  this.products =
+  snapshot.docs
+  .map(doc => ({
+    id:doc.id,
+    ...doc.data()
+  }))
+  .filter(product => !product.isDeleted);
 
-      });
+});
 
     },
 
